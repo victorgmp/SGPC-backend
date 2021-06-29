@@ -14,7 +14,8 @@ const setTokenCookie = (res: Response, token: string) => {
   res.cookie('refreshToken', token, cookieOptions);
 };
 
-export const verifyEmail = async (req: Request, res: Response) => {
+export const verifyEmail = async (req: Request, res: Response)
+: Promise<Response<any, Record<string, any>>> => {
   try {
     if (!req.body.token) {
       return res.status(400).json({ status: false, message: 'No token received' });
@@ -25,7 +26,6 @@ export const verifyEmail = async (req: Request, res: Response) => {
       return res.status(200).json({ status: true, message: 'Verification successful, you can now login' });
     }
     return res.status(400).json({ status: false, message: 'Verification failed' });
-
   } catch (error) {
     console.log('Error verifying email:', error);
     return res.status(500).send('Internal Server Error');
@@ -33,9 +33,12 @@ export const verifyEmail = async (req: Request, res: Response) => {
 };
 //
 
-export const signUp = async (req: Request, res: Response) => {
+export const signUp = async (req: Request, res: Response)
+: Promise<Response<any, Record<string, any>>> => {
   try {
-    const { email, firstName, lastName, password, acceptTerms }: IUserModel = req.body;
+    const {
+      email, firstName, lastName, password, acceptTerms,
+    }: IUserModel = req.body;
     if (
       !email
       || !firstName
@@ -59,7 +62,8 @@ export const signUp = async (req: Request, res: Response) => {
   }
 };
 
-export const signIn = async (req: Request, res: Response) => {
+export const signIn = async (req: Request, res: Response)
+: Promise<Response<any, Record<string, any>>> => {
   try {
     const { email, password }: IUserModel = req.body;
     const ipAddress = req.ip;
@@ -82,7 +86,8 @@ export const signIn = async (req: Request, res: Response) => {
   }
 };
 
-export const forgotPassword = async (req: Request, res: Response) => {
+export const forgotPassword = async (req: Request, res: Response)
+: Promise<Response<any, Record<string, any>>> => {
   try {
     if (!req.body.email) {
       return res.status(400).json({ status: false, message: 'Please send your email' });
@@ -90,14 +95,14 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     await userService.forgotPassword(req.body.email, req.get('origin'));
     return res.status(200).json({ status: true, message: 'Please check your email for password reset instructions' });
-
   } catch (error) {
     console.log('Error recovering password:', error);
     return res.status(500).send('Internal Server Error');
   }
 };
 
-export const resetPassword = async (req: Request, res: Response) => {
+export const resetPassword = async (req: Request, res: Response)
+: Promise<Response<any, Record<string, any>>> => {
   try {
     if (!req.body.token || !req.body.password) {
       return res.status(400).json({ status: false, message: 'Please send your new password' });
@@ -109,14 +114,14 @@ export const resetPassword = async (req: Request, res: Response) => {
     }
 
     return res.status(400).json({ status: false, message: 'Invalid token' });
-
   } catch (error) {
     console.log('Error recovering password:', error);
     return res.status(500).send('Internal Server Error');
   }
 };
 
-export const validateResetToken = async (req: Request, res: Response) => {
+export const validateResetToken = async (req: Request, res: Response)
+: Promise<Response<any, Record<string, any>>> => {
   try {
     if (!req.body.token) {
       return res.status(400).json({ status: false, message: 'Please send your token' });
@@ -128,14 +133,14 @@ export const validateResetToken = async (req: Request, res: Response) => {
     }
 
     return res.status(400).json({ status: false, message: 'Invalid token' });
-
   } catch (error) {
     console.log('Error validating reset token:', error);
     return res.status(500).send('Internal Server Error');
   }
 };
 
-export const refreshToken = async (req: Request, res: Response) => {
+export const refreshToken = async (req: Request, res: Response)
+: Promise<Response<any, Record<string, any>>> => {
   try {
     const token = req.cookies.refreshToken;
     const ipAddress: string = req.ip;
@@ -145,18 +150,19 @@ export const refreshToken = async (req: Request, res: Response) => {
       return res.status(400).json({ status: false, message: 'Invalid token' });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     const { refreshToken, ...userData } = user;
     setTokenCookie(res, user.refreshToken);
 
     return res.status(200).json({ status: true, payload: userData });
-
   } catch (error) {
     console.log('Error refreshing token:', error);
     return res.status(500).send('Internal Server Error');
   }
 };
 
-export const revokeToken = async (req: Request, res: Response) => {
+export const revokeToken = async (req: Request, res: Response)
+: Promise<Response<any, Record<string, any>>> => {
   try {
     // accept token from request body or cookie
     const token = req.body.token || req.cookies.refreshToken;
@@ -173,7 +179,6 @@ export const revokeToken = async (req: Request, res: Response) => {
     if (!isRevoked) return res.status(401).json({ message: 'Unauthorized' });
 
     return res.status(200).json({ status: true, message: 'Token revoked' });
-
   } catch (error) {
     console.log('Error revoking token:', error);
     return res.status(500).send('Internal Server Error');

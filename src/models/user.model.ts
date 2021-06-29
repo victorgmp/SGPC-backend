@@ -47,9 +47,10 @@ const userSchema: Schema = new Schema(
   },
 );
 
-userSchema.virtual('isVerified').get(function (this: { verified: string, passwordReset: string}) {
+// eslint-disable-next-line func-names
+userSchema.virtual('isVerified').get(function (this: { verified: string, passwordReset: string }) {
   return !!(this.verified || this.passwordReset);
-}) ;
+});
 
 // userSchema.methods.encryptPassword = async (password: string) => {
 //   const salt = await bcrypt.genSalt(10);

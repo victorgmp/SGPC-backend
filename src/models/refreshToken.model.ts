@@ -1,3 +1,4 @@
+/* eslint-disable func-names */
 import { model, Schema, Document } from 'mongoose';
 import { IUserModel } from './user.model';
 
@@ -30,12 +31,12 @@ const refreshTokenSchema = new Schema(
   },
 );
 
-refreshTokenSchema.virtual('isExpired').get(function (this: { expires: number}) {
+refreshTokenSchema.virtual('isExpired').get(function (this: { expires: number }) {
   const isExpired: boolean = Date.now() >= this.expires;
   return isExpired;
 });
 
-refreshTokenSchema.virtual('isActive').get(function (this: { revoked: Date, isExpired: boolean}) {
+refreshTokenSchema.virtual('isActive').get(function (this: { revoked: Date, isExpired: boolean }) {
   const isActive: boolean = !this.revoked && !this.isExpired;
   return isActive;
 });

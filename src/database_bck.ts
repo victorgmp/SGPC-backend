@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+/* eslint-disable import/prefer-default-export */
 import { Db, MongoClient } from 'mongodb';
 import config from './config';
 

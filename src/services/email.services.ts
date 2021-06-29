@@ -5,14 +5,19 @@ import { IUserModel } from '../models/user.model';
 import { IEmail } from '../interfaces';
 
 const sendEmail = async (
-  { to, subject, html, from = config.EMAIL_FROM }: IEmail,
-  ) => {
+  {
+    to, subject, html, from = config.EMAIL_FROM,
+  }: IEmail,
+) => {
   const transporter = nodemailer.createTransport(config.smtpOptions);
-  await transporter.sendMail({ from, to, subject, html });
+  await transporter.sendMail({
+    from, to, subject, html,
+  });
 };
 
-export const sendVerificationEmail = async (user: IUserModel, origin: string | undefined) => {
-  let message;
+export const sendVerificationEmail = async (user: IUserModel, origin: string | undefined)
+: Promise<void> => {
+  let message: string;
   if (origin) {
     const verifyUrl = `${origin}/user/verify-email?token=${user.verificationToken}`;
     message = `<p>Please click the below link to verify your email address:</p>
@@ -31,8 +36,9 @@ export const sendVerificationEmail = async (user: IUserModel, origin: string | u
   });
 };
 
-export const sendAlreadyRegisteredEmail = async (email: string, origin: string | undefined) => {
-  let message;
+export const sendAlreadyRegisteredEmail = async (email: string, origin: string | undefined)
+: Promise<void> => {
+  let message: string;
   if (origin) {
     message = `<p>If you don't know your password please visit the <a href="${origin}/user/forgot-password">forgot password</a> page.</p>`;
   } else {
@@ -48,8 +54,9 @@ export const sendAlreadyRegisteredEmail = async (email: string, origin: string |
   });
 };
 
-export const sendPasswordResetEmail = async (user: IUserModel, origin: string | undefined) => {
-  let message;
+export const sendPasswordResetEmail = async (user: IUserModel, origin: string | undefined)
+: Promise<void> => {
+  let message: string;
   if (origin && user.resetToken && user.resetToken.token) {
     const resetUrl = `${origin}/user/reset-password?token=${user.resetToken.token}`;
     message = `<p>Please click the below link to reset your password, the link will be valid for 1 day:</p>

@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import config from '../config';
 import User, { IUserModel } from '../models/user.model';
 import RefreshToken, { IRefreshTokenModel } from '../models/refreshToken.model';
-import { Role } from '../enums/Role';
+import Role from '../enums/Role';
 import { IUser } from '../interfaces';
 
 import * as emailServices from './email.services';
@@ -17,25 +17,20 @@ export const hashPassword = async (salt: string, password: string): Promise<stri
   return hash.digest('hex');
 };
 
-const randomTokenString = async () => {
-  return crypto.randomBytes(40).toString('hex');
-};
+const randomTokenString = async (): Promise<string> => crypto.randomBytes(40).toString('hex');
 
-const generateJwtToken = (user: IUserModel): string => {
-  return jwt.sign({ id: user.id, email: user.email }, config.JWT_SECRET, {
-    expiresIn: 900,
-  });
-};
+const generateJwtToken = (user: IUserModel)
+: string => jwt.sign({ id: user.id, email: user.email }, config.JWT_SECRET, {
+  expiresIn: 900,
+});
 
-const generateRefreshToken = async (userId: string, ipAddress: string): Promise<IRefreshTokenModel> => {
-  // create a refresh token that expires in 7 days
-  return new RefreshToken({
-    user: userId,
-    token: await randomTokenString(),
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    createdByIp: ipAddress,
-  });
-};
+const generateRefreshToken = async (userId: string, ipAddress: string)
+: Promise<IRefreshTokenModel> => new RefreshToken({
+  user: userId,
+  token: await randomTokenString(),
+  expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  createdByIp: ipAddress,
+});
 
 const getRefreshToken = async (token: string) => {
   const refreshToken: IRefreshTokenModel | null = await RefreshToken.findOne({ token }).populate('user');
@@ -44,19 +39,17 @@ const getRefreshToken = async (token: string) => {
   return refreshToken;
 };
 
-const toPublic = (user: IUserModel, jwtToken: string, refreshToken: string): IUser => {
-  return {
-    refreshToken,
-    jwtToken,
-    id: user.id,
-    email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    role: user.role,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
-  };
-};
+const toPublic = (user: IUserModel, jwtToken: string, refreshToken: string): IUser => ({
+  refreshToken,
+  jwtToken,
+  id: user.id,
+  email: user.email,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  role: user.role,
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
+});
 
 export const verifyEmail = async (token: string): Promise<boolean> => {
   try {
@@ -90,8 +83,8 @@ export const signUp = async (data: IUserModel, origin: string | undefined): Prom
     newUser.verificationToken = await randomTokenString();
 
     newUser.salt = crypto.randomBytes(16)
-    .toString('hex')
-    .slice(0, 16);
+      .toString('hex')
+      .slice(0, 16);
     newUser.password = await hashPassword(newUser.salt, data.password);
 
     // add a new user
@@ -99,21 +92,21 @@ export const signUp = async (data: IUserModel, origin: string | undefined): Prom
     // send email
     await emailServices.sendVerificationEmail(newUser, origin);
     return true;
-
   } catch (error) {
     console.log('Error signup user:', error);
     throw new Error('SignUpError');
   }
 };
 
-export const signIn = async (email: string, password: string, ipAddress: string): Promise<false | IUser> => {
+export const signIn = async (email: string, password: string, ipAddress: string)
+: Promise<false | IUser> => {
   try {
     const user = await User.findOne({ email });
 
     if (
       !user
       || !user.isVerified
-      ) {
+    ) {
       return false;
       // TODO: return user not verified
     }
@@ -135,14 +128,14 @@ export const signIn = async (email: string, password: string, ipAddress: string)
     return {
       ...toPublic(user, jwtToken, newRefreshToken.token),
     };
-
   } catch (error) {
     console.log('Error signin user:', error);
     throw new Error('SignInError');
   }
 };
 
-export const forgotPassword = async (email: string, origin: string | undefined): Promise<boolean> => {
+export const forgotPassword = async (email: string, origin: string | undefined)
+: Promise<boolean> => {
   try {
     const user = await User.findOne({ email });
     // always return ok response to prevent email enumeration
@@ -158,7 +151,6 @@ export const forgotPassword = async (email: string, origin: string | undefined):
     // send email
     await emailServices.sendPasswordResetEmail(user, origin);
     return true;
-
   } catch (error) {
     console.log('Error recovering password: ', error);
     throw new Error('ForgotPasswordError');
@@ -195,7 +187,6 @@ export const validateResetToken = async (token: string): Promise<boolean> => {
 
     if (user) return true;
     return false;
-
   } catch (error) {
     console.log('Error validating reset token: ', error);
     throw new Error('ValidateResetTokenError');
@@ -204,17 +195,25 @@ export const validateResetToken = async (token: string): Promise<boolean> => {
 
 export const refreshToken = async (token: string, ipAddress: string): Promise<false | IUser> => {
   try {
-    const refreshToken = await getRefreshToken(token);
-    if (!refreshToken) return false;
+    const oldRefreshToken = await getRefreshToken(token);
+    if (!oldRefreshToken) return false;
 
-    const { user } = refreshToken;
+    const { user } = oldRefreshToken;
 
     // replace old refresh token with a new one and save
     const newRefreshToken = await generateRefreshToken(user, ipAddress);
-    refreshToken.revoked = new Date(Date.now());
-    refreshToken.revokedByIp = ipAddress;
-    refreshToken.replacedByToken = newRefreshToken.token;
-    await refreshToken.save();
+
+    // const replacedRefreshToken: IRefreshTokenModel = new RefreshToken({
+    //   revoked: new Date(Date.now()),
+    //   revokedByIp: ipAddress,
+    //   replacedByToken: newRefreshToken.token,
+    //   ...oldRefreshToken,
+    // });
+    // console.log('replacedRefreshToken', replacedRefreshToken);
+    oldRefreshToken.revoked = new Date(Date.now());
+    oldRefreshToken.revokedByIp = ipAddress;
+    oldRefreshToken.replacedByToken = newRefreshToken.token;
+    await oldRefreshToken.save();
     await newRefreshToken.save();
 
     // generate new jwt
@@ -224,24 +223,22 @@ export const refreshToken = async (token: string, ipAddress: string): Promise<fa
     return {
       ...toPublic(user, jwtToken, newRefreshToken.token),
     };
-
   } catch (error) {
     console.log('Error refreshing token: ', error);
     throw new Error('RefreshTokenError');
   }
 };
 
-export const revokeToken = async (token: string, ipAddress: string) => {
+export const revokeToken = async (token: string, ipAddress: string): Promise<boolean> => {
   try {
-    const refreshToken = await getRefreshToken(token);
-    if (!refreshToken) return false;
+    const oldRefreshToken = await getRefreshToken(token);
+    if (!oldRefreshToken) return false;
 
     // revoke token and save
-    refreshToken.revoked = new Date(Date.now());
-    refreshToken.revokedByIp = ipAddress;
-    await refreshToken.save();
+    oldRefreshToken.revoked = new Date(Date.now());
+    oldRefreshToken.revokedByIp = ipAddress;
+    await oldRefreshToken.save();
     return true;
-
   } catch (error) {
     console.log('Error revoking token: ', error);
     throw new Error('RevokeTokenError');

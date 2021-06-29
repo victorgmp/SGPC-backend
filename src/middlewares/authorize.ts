@@ -5,12 +5,21 @@ import config from '../config';
 import User from '../models/user.model';
 import RefreshToken from '../models/refreshToken.model';
 import { IToken } from '../interfaces';
-import { Role } from '../enums';
+// import { Role } from '../enums';
 
-export const authorize = async (req: Request, res: Response, next: NextFunction) => {
-  const token = <string>req.headers['x-access-token'];
+// eslint-disable-next-line import/prefer-default-export
+export const authorize = async (req: Request, res: Response, next: NextFunction)
+// eslint-disable-next-line consistent-return
+: Promise<Response<any, Record<string, any>>> => {
+  // const token = <string>req.headers['x-access-token'];
+  const authorization = req.get('authorization');
+  let token: string;
 
-  if (!token) return res.status(403).json({ status: false, message: 'No token provided' });
+  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+    token = authorization.substring(7);
+  }
+
+  if (!token) return res.status(403).json({ status: false, message: 'No token provided or malformed' });
 
   try {
     const jwtPayload = <IToken>jwt.verify(token, config.JWT_SECRET);
@@ -22,13 +31,12 @@ export const authorize = async (req: Request, res: Response, next: NextFunction)
     // attach user id to locals response object
     res.locals.userId = jwtPayload.id;
     res.locals.userRole = user.role;
-    res.locals.ownsToken = (token: string) => !!refreshTokens.find(x => x.token === token);
-    next();
+    res.locals.ownsToken = (tok: string) => !!refreshTokens.find((x) => x.token === tok);
 
+    next();
   } catch (error) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
-
 };
 
 // export const isAdmin = async (req: Request, res: Response, next: NextFunction) => {

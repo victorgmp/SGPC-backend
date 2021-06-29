@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 
 import Task, { ITask } from '../models/task.model';
 
-export const createTask = async (req: Request, res: Response) => {
+export const createTask = async (req: Request, res: Response)
+: Promise<Response<any, Record<string, any>>> => {
   try {
     const newTask: ITask = new Task(req.body);
     await newTask.save();
@@ -12,7 +13,8 @@ export const createTask = async (req: Request, res: Response) => {
   }
 };
 
-export const getTasks = async (req: Request, res: Response) => {
+export const getTasks = async (req: Request, res: Response)
+: Promise<Response<any, Record<string, any>>> => {
   try {
     const tasks = await Task.find();
     return res.status(200).send({ status: true, payload: tasks });
@@ -21,7 +23,8 @@ export const getTasks = async (req: Request, res: Response) => {
   }
 };
 
-export const getTask = async (req: Request, res: Response) => {
+export const getTask = async (req: Request, res: Response)
+: Promise<Response<any, Record<string, any>>> => {
   try {
     const task = await Task.findById(req.params.taskId);
     return res.status(200).send({ status: true, payload: task });
@@ -30,7 +33,8 @@ export const getTask = async (req: Request, res: Response) => {
   }
 };
 
-export const updateTask = async (req: Request, res: Response) => {
+export const updateTask = async (req: Request, res: Response)
+: Promise<Response<any, Record<string, any>>> => {
   try {
     const task: ITask = req.body;
     await Task.findByIdAndUpdate(
@@ -46,7 +50,8 @@ export const updateTask = async (req: Request, res: Response) => {
   }
 };
 
-export const removeTask = async (req: Request, res: Response) => {
+export const removeTask = async (req: Request, res: Response)
+: Promise<Response<any, Record<string, any>>> => {
   try {
     await Task.findByIdAndDelete(req.params.taskId);
     return res.status(200).send({ status: true, messsage: 'task deleted!' });
