@@ -1,0 +1,10 @@
+POST http://localhost:4000/api/auth/sign-up
+Content-Type: application/json
+
+{
+  "email": "victorgmp@gmail.com",
+  "firstName": "Víctor",
+  "lastName": "Moreno",
+  "password": "Abc*123",
+  "acceptTerms": true
+}

@@ -1,0 +1,54 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "airbnb-typescript/base"
+  ],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+    // "ecmaVersion": 12,
+    // "sourceType": "module"
+  },
+  "rules": {
+    "eofline": 0,
+    "max-line-length": 0,
+    "no-increment-decrement": 0,
+    "import-name": 0,
+
+    "@typescript-eslint/no-unused-vars": "off",
+    "no-unused-vars": "off",
+
+    "@typescript-eslint/no-useless-constructor": 0,
+    "@typescript-eslint/indent": ["error", 2],
+    "@typescript-eslint/no-explicit-any": "off",
+
+    "import/extensions": "off",
+
+    "lines-between-class-members": "off",
+    "@typescript-eslint/lines-between-class-members": ["off"],
+
+    "no-case-declarations": 0,
+    "no-console": 0
+
+    // "@typescript-eslint/explicit-module-boundary-types": "off"
+  },
+  "settings": {
+    "import/extensions": [".ts"],
+    "import/parsers": {
+      "@typescript-eslint/parser": [".ts"]
+     },
+     "import/resolver": {
+         "node": {
+             "extensions": [".ts"]
+         }
+     }
+  }
+}
