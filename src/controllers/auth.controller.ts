@@ -21,17 +21,17 @@ export const verifyEmail = async (req: Request, res: Response)
       return res.status(400).json({ status: false, message: 'No token received' });
     }
 
-    const isVerified: boolean = await userService.verifyEmail(req.body.token);
-    if (isVerified) {
-      return res.status(200).json({ status: true, message: 'Verification successful, you can now login' });
-    }
-    return res.status(400).json({ status: false, message: 'Verification failed' });
+    await userService.verifyEmail(req.body.token);
+    return res.status(200).json({ status: true, message: 'Verification successful, you can now login' });
   } catch (error) {
-    console.log('Error verifying email:', error);
-    return res.status(500).send('Internal Server Error');
+    switch (error.message) {
+      case 'EmailVerificationError':
+        return res.status(400).send('Verification failed');
+      default:
+        return res.status(500).send('Internal Server Error');
+    }
   }
 };
-//
 
 export const signUp = async (req: Request, res: Response)
 : Promise<Response<any, Record<string, any>>> => {
@@ -50,15 +50,16 @@ export const signUp = async (req: Request, res: Response)
     }
 
     const user: IUserModel = req.body;
-    const newUser: boolean = await userService.signUp(user, req.get('origin'));
-    if (newUser) {
-      return res.status(201).send({ status: true, message: 'Registration successful, please check your email for verification instructions' });
-    }
+    await userService.signUp(user, req.get('origin'));
 
-    return res.status(400).json({ status: false, message: 'Registration failed' });
+    return res.status(201).send({ status: true, message: 'Registration successful, please check your email for verification instructions' });
   } catch (error) {
-    console.log('Error signup user:', error);
-    return res.status(500).send('Internal Server Error');
+    switch (error.message) {
+      case 'SignUpError':
+        return res.status(400).json({ status: false, message: 'Registration failed' });
+      default:
+        return res.status(500).send('Internal Server Error');
+    }
   }
 };
 
@@ -81,8 +82,12 @@ export const signIn = async (req: Request, res: Response)
 
     return res.status(200).json({ status: true, payload: userData });
   } catch (error) {
-    console.log('Error signup user:', error);
-    return res.status(500).send('Internal Server Error');
+    switch (error.message) {
+      case 'SignInError':
+        return res.status(400).json({ status: false, message: 'Email or password wrong' });
+      default:
+        return res.status(500).send('Internal Server Error');
+    }
   }
 };
 
@@ -96,10 +101,34 @@ export const forgotPassword = async (req: Request, res: Response)
     await userService.forgotPassword(req.body.email, req.get('origin'));
     return res.status(200).json({ status: true, message: 'Please check your email for password reset instructions' });
   } catch (error) {
-    console.log('Error recovering password:', error);
-    return res.status(500).send('Internal Server Error');
+    switch (error.message) {
+      case 'ForgotPasswordError':
+        return res.status(400).json({ status: false, message: 'Error recovering password' });
+      default:
+        return res.status(500).send('Internal Server Error');
+    }
   }
 };
+
+// export const resetPassword = async (req: Request, res: Response)
+// : Promise<Response<any, Record<string, any>>> => {
+//   try {
+//     if (!req.body.token || !req.body.password) {
+//       return res.status(400).json({ status: false, message: 'Please send your new password' });
+//     }
+
+//     await userService.resetPassword(req.body.token, req.body.password);
+
+//     return res.status(200).json({ status: true, message: 'Password reset successful, you can now login' });
+//   } catch (error) {
+//     switch (error.message) {
+//       case 'ResetPasswordError':
+//         return res.status(400).json({ status: false, message: 'Error resetting password' });
+//       default:
+//         return res.status(500).send('Internal Server Error');
+//     }
+//   }
+// };
 
 export const resetPassword = async (req: Request, res: Response)
 : Promise<Response<any, Record<string, any>>> => {
@@ -156,8 +185,12 @@ export const refreshToken = async (req: Request, res: Response)
 
     return res.status(200).json({ status: true, payload: userData });
   } catch (error) {
-    console.log('Error refreshing token:', error);
-    return res.status(500).send('Internal Server Error');
+    switch (error.message) {
+      case 'RefreshTokenError':
+        return res.status(401).send('Unauthorized');
+      default:
+        return res.status(500).send('Internal Server Error');
+    }
   }
 };
 

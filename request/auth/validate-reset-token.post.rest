@@ -1,0 +1,6 @@
+POST http://localhost:4000/api/auth/validate-reset-token 
+Content-Type: application/json
+
+{
+  "token": "097ce8879a259b900151e432203cdd9a8433e25aae86ea08c9788295e0007779c1450760d74e401e"
+}

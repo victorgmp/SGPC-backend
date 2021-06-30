@@ -34,8 +34,8 @@ const generateRefreshToken = async (userId: string, ipAddress: string)
 
 const getRefreshToken = async (token: string) => {
   const refreshToken: IRefreshTokenModel | null = await RefreshToken.findOne({ token }).populate('user');
-  // if (!refreshToken || !refreshToken.isActive) throw 'Invalid token';
-  if (!refreshToken || !refreshToken.isActive) return false;
+  if (!refreshToken || !refreshToken.isActive) throw new Error('Invalid token');
+
   return refreshToken;
 };
 
@@ -51,29 +51,26 @@ const toPublic = (user: IUserModel, jwtToken: string, refreshToken: string): IUs
   updatedAt: user.updatedAt,
 });
 
-export const verifyEmail = async (token: string): Promise<boolean> => {
+export const verifyEmail = async (token: string): Promise<void> => {
   try {
     const user = await User.findOne({ verificationToken: token });
 
-    if (!user) return false;
-
-    user.verified = new Date(Date.now());
+    user.verified = new Date();
     user.verificationToken = undefined;
     await user.save();
-    return true;
   } catch (error) {
     console.log('Error verifying email:', error);
     throw new Error('EmailVerificationError');
   }
 };
 
-export const signUp = async (data: IUserModel, origin: string | undefined): Promise<boolean> => {
+export const signUp = async (data: IUserModel, origin: string | undefined): Promise<void> => {
   try {
     const user = await User.findOne({ email: data.email });
     if (user) {
       // send already registered error in email to prevent account enumeration
       await emailServices.sendAlreadyRegisteredEmail(data.email, origin);
-      return true;
+      return;
     }
 
     const newUser: IUserModel = new User(data);
@@ -91,32 +88,22 @@ export const signUp = async (data: IUserModel, origin: string | undefined): Prom
     await newUser.save();
     // send email
     await emailServices.sendVerificationEmail(newUser, origin);
-    return true;
   } catch (error) {
-    console.log('Error signup user:', error);
+    console.log('Error registering user:', error);
     throw new Error('SignUpError');
   }
 };
 
 export const signIn = async (email: string, password: string, ipAddress: string)
-: Promise<false | IUser> => {
+: Promise<IUser> => {
   try {
     const user = await User.findOne({ email });
 
-    if (
-      !user
-      || !user.isVerified
-    ) {
-      return false;
-      // TODO: return user not verified
-    }
+    if (!user || !user.isVerified) throw new Error('User not verified');
 
     const passwordHash = await hashPassword(user.salt, password);
 
-    if (passwordHash !== user.password) {
-      return false;
-      // TODO: return email or password wrong
-    }
+    if (passwordHash !== user.password) throw new Error('Email or Password wrong');
     // const isMatch = user ? await bcrypt.compare(password, user.password) : false;
     // authentication successful so generate jwt and refresh tokens
     const jwtToken: string = generateJwtToken(user);
@@ -129,17 +116,17 @@ export const signIn = async (email: string, password: string, ipAddress: string)
       ...toPublic(user, jwtToken, newRefreshToken.token),
     };
   } catch (error) {
-    console.log('Error signin user:', error);
+    console.log('Error authenticating user:', error);
     throw new Error('SignInError');
   }
 };
 
 export const forgotPassword = async (email: string, origin: string | undefined)
-: Promise<boolean> => {
+: Promise<void> => {
   try {
     const user = await User.findOne({ email });
     // always return ok response to prevent email enumeration
-    if (!user) return true;
+    if (!user) return;
 
     // create reset token that expires after 24 hours
     user.resetToken = {
@@ -147,15 +134,33 @@ export const forgotPassword = async (email: string, origin: string | undefined)
       expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
     };
     await user.save();
-
     // send email
     await emailServices.sendPasswordResetEmail(user, origin);
-    return true;
   } catch (error) {
     console.log('Error recovering password: ', error);
     throw new Error('ForgotPasswordError');
   }
 };
+
+// export const resetPassword = async (token: string, password: string): Promise<void> => {
+//   try {
+//     const user = await User.findOne({
+//       'resetToken.token': token,
+//     });
+//     console.log('user', user);
+//     // always return ok response to prevent email enumeration
+//     if (!user) throw new Error('Invalid token');
+
+//     // update password and remove reset token
+//     user.password = await hashPassword(user.salt, password);
+//     user.passwordReset = new Date(); // new Date(Date.now())
+//     user.resetToken = undefined;
+//     await user.save();
+//   } catch (error) {
+//     console.log('Error resetting password: ', error);
+//     throw new Error('ResetPasswordError');
+//   }
+// };
 
 export const resetPassword = async (token: string, password: string): Promise<boolean> => {
   try {
@@ -196,20 +201,10 @@ export const validateResetToken = async (token: string): Promise<boolean> => {
 export const refreshToken = async (token: string, ipAddress: string): Promise<false | IUser> => {
   try {
     const oldRefreshToken = await getRefreshToken(token);
-    if (!oldRefreshToken) return false;
-
     const { user } = oldRefreshToken;
 
     // replace old refresh token with a new one and save
     const newRefreshToken = await generateRefreshToken(user, ipAddress);
-
-    // const replacedRefreshToken: IRefreshTokenModel = new RefreshToken({
-    //   revoked: new Date(Date.now()),
-    //   revokedByIp: ipAddress,
-    //   replacedByToken: newRefreshToken.token,
-    //   ...oldRefreshToken,
-    // });
-    // console.log('replacedRefreshToken', replacedRefreshToken);
     oldRefreshToken.revoked = new Date(Date.now());
     oldRefreshToken.revokedByIp = ipAddress;
     oldRefreshToken.replacedByToken = newRefreshToken.token;
@@ -224,7 +219,7 @@ export const refreshToken = async (token: string, ipAddress: string): Promise<fa
       ...toPublic(user, jwtToken, newRefreshToken.token),
     };
   } catch (error) {
-    console.log('Error refreshing token: ', error);
+    console.log('Error refreshing token', error);
     throw new Error('RefreshTokenError');
   }
 };
@@ -232,7 +227,6 @@ export const refreshToken = async (token: string, ipAddress: string): Promise<fa
 export const revokeToken = async (token: string, ipAddress: string): Promise<boolean> => {
   try {
     const oldRefreshToken = await getRefreshToken(token);
-    if (!oldRefreshToken) return false;
 
     // revoke token and save
     oldRefreshToken.revoked = new Date(Date.now());
