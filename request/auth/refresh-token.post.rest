@@ -1,0 +1,2 @@
+POST http://localhost:4000/api/auth/refresh-token
+Content-Type: application/json
