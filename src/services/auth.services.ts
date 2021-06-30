@@ -142,56 +142,33 @@ export const forgotPassword = async (email: string, origin: string | undefined)
   }
 };
 
-// export const resetPassword = async (token: string, password: string): Promise<void> => {
-//   try {
-//     const user = await User.findOne({
-//       'resetToken.token': token,
-//     });
-//     console.log('user', user);
-//     // always return ok response to prevent email enumeration
-//     if (!user) throw new Error('Invalid token');
-
-//     // update password and remove reset token
-//     user.password = await hashPassword(user.salt, password);
-//     user.passwordReset = new Date(); // new Date(Date.now())
-//     user.resetToken = undefined;
-//     await user.save();
-//   } catch (error) {
-//     console.log('Error resetting password: ', error);
-//     throw new Error('ResetPasswordError');
-//   }
-// };
-
-export const resetPassword = async (token: string, password: string): Promise<boolean> => {
+export const resetPassword = async (token: string, password: string): Promise<void> => {
   try {
     const user = await User.findOne({
       'resetToken.token': token,
       'resetToken.expires': { $gt: Date.now() },
     });
-
-    if (!user) return false;
+    console.log('user', user);
+    // always return ok response to prevent email enumeration
+    if (!user) throw new Error('Invalid token');
 
     // update password and remove reset token
     user.password = await hashPassword(user.salt, password);
-    user.passwordReset = new Date(Date.now());
+    user.passwordReset = new Date(); // new Date(Date.now())
     user.resetToken = undefined;
     await user.save();
-    return true;
   } catch (error) {
     console.log('Error resetting password: ', error);
     throw new Error('ResetPasswordError');
   }
 };
 
-export const validateResetToken = async (token: string): Promise<boolean> => {
+export const validateResetToken = async (token: string): Promise<void> => {
   try {
     const user = await User.findOne({
       'resetToken.token': token,
       'resetToken.expires': { $gt: Date.now() },
     });
-
-    if (user) return true;
-    return false;
   } catch (error) {
     console.log('Error validating reset token: ', error);
     throw new Error('ValidateResetTokenError');
@@ -205,7 +182,7 @@ export const refreshToken = async (token: string, ipAddress: string): Promise<fa
 
     // replace old refresh token with a new one and save
     const newRefreshToken = await generateRefreshToken(user, ipAddress);
-    oldRefreshToken.revoked = new Date(Date.now());
+    oldRefreshToken.revoked = new Date(); // new Date(Date.now())
     oldRefreshToken.revokedByIp = ipAddress;
     oldRefreshToken.replacedByToken = newRefreshToken.token;
     await oldRefreshToken.save();
@@ -224,15 +201,14 @@ export const refreshToken = async (token: string, ipAddress: string): Promise<fa
   }
 };
 
-export const revokeToken = async (token: string, ipAddress: string): Promise<boolean> => {
+export const revokeToken = async (token: string, ipAddress: string): Promise<void> => {
   try {
     const oldRefreshToken = await getRefreshToken(token);
 
     // revoke token and save
-    oldRefreshToken.revoked = new Date(Date.now());
+    oldRefreshToken.revoked = new Date();
     oldRefreshToken.revokedByIp = ipAddress;
     await oldRefreshToken.save();
-    return true;
   } catch (error) {
     console.log('Error revoking token: ', error);
     throw new Error('RevokeTokenError');

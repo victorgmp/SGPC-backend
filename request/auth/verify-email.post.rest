@@ -2,5 +2,5 @@ POST http://localhost:4000/api/auth/verify-email
 Content-Type: application/json
 
 {
-  "token": "406a27e290cd6fbb928f045787fa1846989987ccdf4cd034db5c17881530fee3e9cf7ab8ab41d413"
+  "token": "9d0178ef46acff94b660205052bf0a95d55c4b5c97f76ff4fe20612e653f95ee1f03ac4226e7b938"
 }

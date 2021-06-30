@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { IUser } from '../interfaces';
 
 import { IUserModel } from '../models/user.model';
-import * as userService from '../services/user.services';
+import * as userService from '../services/auth.services';
 
 // helper functions
 const setTokenCookie = (res: Response, token: string) => {
@@ -110,26 +110,6 @@ export const forgotPassword = async (req: Request, res: Response)
   }
 };
 
-// export const resetPassword = async (req: Request, res: Response)
-// : Promise<Response<any, Record<string, any>>> => {
-//   try {
-//     if (!req.body.token || !req.body.password) {
-//       return res.status(400).json({ status: false, message: 'Please send your new password' });
-//     }
-
-//     await userService.resetPassword(req.body.token, req.body.password);
-
-//     return res.status(200).json({ status: true, message: 'Password reset successful, you can now login' });
-//   } catch (error) {
-//     switch (error.message) {
-//       case 'ResetPasswordError':
-//         return res.status(400).json({ status: false, message: 'Error resetting password' });
-//       default:
-//         return res.status(500).send('Internal Server Error');
-//     }
-//   }
-// };
-
 export const resetPassword = async (req: Request, res: Response)
 : Promise<Response<any, Record<string, any>>> => {
   try {
@@ -137,15 +117,16 @@ export const resetPassword = async (req: Request, res: Response)
       return res.status(400).json({ status: false, message: 'Please send your new password' });
     }
 
-    const isReset: boolean = await userService.resetPassword(req.body.token, req.body.password);
-    if (isReset) {
-      return res.status(200).json({ status: true, message: 'Password reset successful, you can now login' });
-    }
+    await userService.resetPassword(req.body.token, req.body.password);
 
-    return res.status(400).json({ status: false, message: 'Invalid token' });
+    return res.status(200).json({ status: true, message: 'Password reset successful, you can now login' });
   } catch (error) {
-    console.log('Error recovering password:', error);
-    return res.status(500).send('Internal Server Error');
+    switch (error.message) {
+      case 'ResetPasswordError':
+        return res.status(400).json({ status: false, message: 'Error resetting password' });
+      default:
+        return res.status(500).send('Internal Server Error');
+    }
   }
 };
 
@@ -156,15 +137,15 @@ export const validateResetToken = async (req: Request, res: Response)
       return res.status(400).json({ status: false, message: 'Please send your token' });
     }
 
-    const isValid: boolean = await userService.validateResetToken(req.body.token);
-    if (isValid) {
-      return res.status(200).json({ status: true, message: 'Token is valid' });
-    }
-
-    return res.status(400).json({ status: false, message: 'Invalid token' });
+    await userService.validateResetToken(req.body.token);
+    return res.status(200).json({ status: true, message: 'Token is valid' });
   } catch (error) {
-    console.log('Error validating reset token:', error);
-    return res.status(500).send('Internal Server Error');
+    switch (error.message) {
+      case 'ValidateResetTokenError':
+        return res.status(400).json({ status: false, message: 'Invalid token' });
+      default:
+        return res.status(500).send('Internal Server Error');
+    }
   }
 };
 
@@ -208,12 +189,15 @@ export const revokeToken = async (req: Request, res: Response)
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const isRevoked = await userService.revokeToken(token, ipAddress);
-    if (!isRevoked) return res.status(401).json({ message: 'Unauthorized' });
+    await userService.revokeToken(token, ipAddress);
 
     return res.status(200).json({ status: true, message: 'Token revoked' });
   } catch (error) {
-    console.log('Error revoking token:', error);
-    return res.status(500).send('Internal Server Error');
+    switch (error.message) {
+      case 'RevokeTokenError':
+        return res.status(401).send('Unauthorized');
+      default:
+        return res.status(500).send('Internal Server Error');
+    }
   }
 };
