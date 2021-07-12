@@ -2,9 +2,11 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
 import config from '../config';
-import User, { IUserModel } from '../models/user.model';
+
 import RefreshToken, { IRefreshTokenModel } from '../models/refreshToken.model';
 import Role from '../enums/Role';
+import User, { IUserModel } from '../models/user.model';
+import { Auth, Errors } from '../messages';
 import { IUser } from '../interfaces';
 
 import * as emailServices from './email.services';
@@ -60,7 +62,7 @@ export const verifyEmail = async (token: string): Promise<void> => {
     await user.save();
   } catch (error) {
     console.log('Error verifying email:', error);
-    throw new Error('EmailVerificationError');
+    throw new Error(Auth.ERROR.EMAIL_VERIFICATION_ERROR);
   }
 };
 
@@ -90,7 +92,7 @@ export const signUp = async (data: IUserModel, origin: string | undefined): Prom
     await emailServices.sendVerificationEmail(newUser, origin);
   } catch (error) {
     console.log('Error registering user:', error);
-    throw new Error('SignUpError');
+    throw new Error(Auth.ERROR.SIGN_UP_ERROR);
   }
 };
 
@@ -117,7 +119,7 @@ export const signIn = async (email: string, password: string, ipAddress: string)
     };
   } catch (error) {
     console.log('Error authenticating user:', error);
-    throw new Error('SignInError');
+    throw new Error(Auth.ERROR.SIGN_IN_ERROR);
   }
 };
 
@@ -138,7 +140,7 @@ export const forgotPassword = async (email: string, origin: string | undefined)
     await emailServices.sendPasswordResetEmail(user, origin);
   } catch (error) {
     console.log('Error recovering password: ', error);
-    throw new Error('ForgotPasswordError');
+    throw new Error(Auth.ERROR.FORGOT_PASSWORD_ERROR);
   }
 };
 
@@ -159,7 +161,7 @@ export const resetPassword = async (token: string, password: string): Promise<vo
     await user.save();
   } catch (error) {
     console.log('Error resetting password: ', error);
-    throw new Error('ResetPasswordError');
+    throw new Error(Auth.ERROR.RESET_PASSWORD_ERROR);
   }
 };
 
@@ -171,7 +173,7 @@ export const validateResetToken = async (token: string): Promise<void> => {
     });
   } catch (error) {
     console.log('Error validating reset token: ', error);
-    throw new Error('ValidateResetTokenError');
+    throw new Error(Auth.ERROR.VALIDATE_RESET_TOKEN_ERROR);
   }
 };
 
@@ -197,7 +199,7 @@ export const refreshToken = async (token: string, ipAddress: string): Promise<fa
     };
   } catch (error) {
     console.log('Error refreshing token', error);
-    throw new Error('RefreshTokenError');
+    throw new Error(Auth.ERROR.REFRESH_TOKEN_ERROR);
   }
 };
 
@@ -211,6 +213,6 @@ export const revokeToken = async (token: string, ipAddress: string): Promise<voi
     await oldRefreshToken.save();
   } catch (error) {
     console.log('Error revoking token: ', error);
-    throw new Error('RevokeTokenError');
+    throw new Error(Auth.ERROR.REVOKE_TOKEN_ERROR);
   }
 };
