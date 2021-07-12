@@ -22,12 +22,12 @@ jobs:
         run: npm run lint
 
       - uses: actions/checkout@v2
-      - name: Bump version and push tag
-        if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
-        uses: anothrNick/github-tag-action@eca2b69f9e2c24be7decccd0f15fdb1ea5906598
-        env: 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEFAULT_BUMP: patch
+      # - name: Bump version and push tag
+      #   if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
+      #   uses: anothrNick/github-tag-action@eca2b69f9e2c24be7decccd0f15fdb1ea5906598
+      #   env: 
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     DEFAULT_BUMP: patch
 
       # - name: send slack success notification
       #   uses: 8398a7/action-slack@v3
