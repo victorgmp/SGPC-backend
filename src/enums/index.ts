@@ -1,4 +1,4 @@
 import Role from './Role';
+import InvitationStatus from './InvitationStatus';
 
-// eslint-disable-next-line import/prefer-default-export
-export { Role };
+export { Role, InvitationStatus };

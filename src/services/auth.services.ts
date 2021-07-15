@@ -6,7 +6,7 @@ import config from '../config';
 import RefreshToken, { IRefreshTokenModel } from '../models/refreshToken.model';
 import Role from '../enums/Role';
 import User, { IUserModel } from '../models/user.model';
-import { Auth, Errors } from '../messages';
+import { Auth } from '../messages';
 import { IUser } from '../interfaces';
 
 import * as emailServices from './email.services';
@@ -19,7 +19,7 @@ export const hashPassword = async (salt: string, password: string): Promise<stri
   return hash.digest('hex');
 };
 
-const randomTokenString = async (): Promise<string> => crypto.randomBytes(40).toString('hex');
+export const randomTokenString = async (): Promise<string> => crypto.randomBytes(40).toString('hex');
 
 const generateJwtToken = (user: IUserModel)
 : string => jwt.sign({ id: user.id, email: user.email }, config.JWT_SECRET, {
@@ -86,10 +86,11 @@ export const signUp = async (data: IUserModel, origin: string | undefined): Prom
       .slice(0, 16);
     newUser.password = await hashPassword(newUser.salt, data.password);
 
-    // add a new user
-    await newUser.save();
-    // send email
-    await emailServices.sendVerificationEmail(newUser, origin);
+    // add a new user and send email
+    await Promise.all([
+      newUser.save(),
+      emailServices.sendVerificationEmail(newUser, origin),
+    ]);
   } catch (error) {
     console.log('Error registering user:', error);
     throw new Error(Auth.ERROR.SIGN_UP_ERROR);
@@ -135,9 +136,12 @@ export const forgotPassword = async (email: string, origin: string | undefined)
       token: await randomTokenString(),
       expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
     };
-    await user.save();
-    // send email
-    await emailServices.sendPasswordResetEmail(user, origin);
+
+    // update user and send email
+    await Promise.all([
+      user.save(),
+      emailServices.sendPasswordResetEmail(user, origin),
+    ]);
   } catch (error) {
     console.log('Error recovering password: ', error);
     throw new Error(Auth.ERROR.FORGOT_PASSWORD_ERROR);
@@ -187,8 +191,11 @@ export const refreshToken = async (token: string, ipAddress: string): Promise<fa
     oldRefreshToken.revoked = new Date(); // new Date(Date.now())
     oldRefreshToken.revokedByIp = ipAddress;
     oldRefreshToken.replacedByToken = newRefreshToken.token;
-    await oldRefreshToken.save();
-    await newRefreshToken.save();
+
+    await Promise.all([
+      oldRefreshToken.save(),
+      newRefreshToken.save(),
+    ]);
 
     // generate new jwt
     const jwtToken: string = generateJwtToken(user);

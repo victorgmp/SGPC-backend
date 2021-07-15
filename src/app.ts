@@ -8,6 +8,7 @@ import pkg from '../package.json';
 import config from './config';
 import taskRoutes from './routes/task.routes';
 import authRoutes from './routes/auth.routes';
+import invitationRoutes from './routes/invitation.routes';
 // import specialRoutes from './routes/special.routes';
 
 const app = express();
@@ -35,5 +36,6 @@ app.get('/', (req, res) => res.json({
 
 app.use('/api/auth', authRoutes);
 app.use('/api/task', taskRoutes);
+app.use('/api/invitation', invitationRoutes);
 
 export default app;

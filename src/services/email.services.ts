@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 
 import config from '../config';
 import { IUserModel } from '../models/user.model';
+import { IInvitationModel } from '../models/invitation.model';
 import { IEmail } from '../interfaces';
 
 const sendEmail = async (
@@ -70,6 +71,27 @@ export const sendPasswordResetEmail = async (user: IUserModel, origin: string | 
     to: user.email,
     subject: 'Sign-up Verification API - Reset Password',
     html: `<h4>Reset Password Email</h4>
+             ${message}`,
+  });
+};
+
+export const sendInvitationEmail = async (invitation: IInvitationModel, origin: string | undefined)
+: Promise<void> => {
+  let message: string;
+  if (origin && invitation.invitationToken && invitation.invitationToken.token) {
+    const invitationUrl = `${origin}/user/invitation?token=${invitation.invitationToken.token}`;
+    message = `<p>Please click the below link to accept the invitation:</p>
+                 <p><a href="${invitationUrl}">${invitationUrl}</a></p>`;
+  } else {
+    message = `<p>Please use the below token to accept the invitation with the <code>/user/invitation</code> api route:</p>
+                 <p><code>${invitation.invitationToken.token}</code></p>`;
+  }
+
+  await sendEmail({
+    to: invitation.email,
+    subject: 'Invitation API - Accept Invitation',
+    html: `<h4>Invitation Email</h4>
+             <p>Welcome to my app!</p>
              ${message}`,
   });
 };
