@@ -29,13 +29,13 @@ export const sendInvitation = async (data: IInvitationModel, origin: string | un
     };
 
     // update the invitation status and resend the email
-    if (invitation && invitation.status !== InvitationStatus.ACEPTED) {
+    if (invitation && invitation.status !== InvitationStatus.ACCEPTED) {
       status = InvitationStatus.FORWARDED;
 
       invitation.status = status;
       invitation.invitationToken = invitationToken;
 
-      Promise.all([
+      await Promise.all([
         Invitation.findOneAndUpdate(
           { email: data.email },
           {

@@ -1,6 +1,6 @@
 POST http://localhost:4000/api/invitation/send-invitation
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwZWY2OTQ0NWZjZjI2YzM4NDc1NzNiNyIsImVtYWlsIjoidmljdG9yQGdtYWlsLmNvbSIsImlhdCI6MTYyNjM2ODkwMiwiZXhwIjoxNjI2MzY5ODAyfQ.4lI5iC0zB22qlI-L0hP5K25iRR7CNUI8IRj8IJTUoFE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwZWY2OTQ0NWZjZjI2YzM4NDc1NzNiNyIsImVtYWlsIjoidmljdG9yQGdtYWlsLmNvbSIsImlhdCI6MTYyNjM3ODYzMSwiZXhwIjoxNjI2Mzc5NTMxfQ.WMrJNMIPC7NpZibCayvT0kWu4aW8IgXKACcjUmfJsWc
 
 {
   "email": "victor2@gmail.com"

@@ -3,11 +3,13 @@ import jwt from 'jsonwebtoken';
 
 import config from '../config';
 
+import Invitation from '../models/invitation.model';
 import RefreshToken, { IRefreshTokenModel } from '../models/refreshToken.model';
-import Role from '../enums/Role';
 import User, { IUserModel } from '../models/user.model';
+
 import { Auth } from '../messages';
 import { IUser } from '../interfaces';
+import { InvitationStatus, Role } from '../enums';
 
 import * as emailServices from './email.services';
 
@@ -80,7 +82,6 @@ export const signUp = async (data: IUserModel, origin: string | undefined): Prom
     const isFirstAccount: boolean = (await User.countDocuments({})) === 0;
     newUser.role = isFirstAccount ? Role.ADMIN : Role.USER;
     newUser.verificationToken = await randomTokenString();
-
     newUser.salt = crypto.randomBytes(16)
       .toString('hex')
       .slice(0, 16);
@@ -90,6 +91,46 @@ export const signUp = async (data: IUserModel, origin: string | undefined): Prom
     await Promise.all([
       newUser.save(),
       emailServices.sendVerificationEmail(newUser, origin),
+    ]);
+  } catch (error) {
+    console.log('Error registering user:', error);
+    throw new Error(Auth.ERROR.SIGN_UP_ERROR);
+  }
+};
+
+export const signUpWithInvitation = async (
+  data: IUserModel, token: string, origin: string | undefined,
+): Promise<void> => {
+  try {
+    const invitation = await Invitation.findOne({
+      'invitationToken.token': token,
+      'invitationToken.expires': { $gt: Date.now() },
+    });
+
+    if (!invitation || invitation.status === InvitationStatus.ACCEPTED) {
+      throw new Error(Auth.ERROR.PROCESSING_INVITATION_ERROR);
+    }
+
+    // create new user
+    const newUser: IUserModel = new User(data);
+    newUser.role = Role.USER;
+    newUser.verificationToken = await randomTokenString();
+    newUser.salt = crypto.randomBytes(16)
+      .toString('hex')
+      .slice(0, 16);
+    newUser.password = await hashPassword(newUser.salt, data.password);
+
+    // add a new user, send email and update invitation status
+    await Promise.all([
+      newUser.save(),
+      emailServices.sendVerificationEmail(newUser, origin),
+      Invitation.findOneAndUpdate(
+        { email: invitation.email },
+        {
+          status: InvitationStatus.ACCEPTED,
+          invitationToken: undefined,
+        },
+      ),
     ]);
   } catch (error) {
     console.log('Error registering user:', error);
@@ -154,7 +195,6 @@ export const resetPassword = async (token: string, password: string): Promise<vo
       'resetToken.token': token,
       'resetToken.expires': { $gt: Date.now() },
     });
-    console.log('user', user);
     // always return ok response to prevent email enumeration
     if (!user) throw new Error('Invalid token');
 

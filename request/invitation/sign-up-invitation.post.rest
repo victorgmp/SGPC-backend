@@ -1,0 +1,11 @@
+POST http://localhost:4000/api/auth/sign-up-invitation
+Content-Type: application/json
+
+{
+  "email": "victor2@gmail.com",
+  "firstName": "Víctor",
+  "lastName": "Moreno",
+  "password": "Abc*123",
+  "acceptTerms": true,
+  "token": "6986a5f93efbc591d82feed25da042fbe6fdb1ae7ed7f89a5a2aa50abcc2e45c5594f95941f26855"
+}

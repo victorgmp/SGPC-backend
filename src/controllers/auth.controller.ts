@@ -65,6 +65,39 @@ export const signUp = async (req: Request, res: Response)
   }
 };
 
+export const signUpWithInvitation = async (req: Request, res: Response)
+: Promise<Response<any, Record<string, any>>> => {
+  try {
+    const {
+      email, firstName, lastName, password, acceptTerms,
+    }: IUserModel = req.body;
+    const { token } = req.body;
+
+    if (
+      !email
+      || !firstName
+      || !lastName
+      || !password
+      || !acceptTerms
+      || !token
+    ) {
+      return res.status(400).json({ status: false, message: Auth.INFO.SEND_DATA });
+    }
+
+    const user: IUserModel = req.body;
+    await userService.signUpWithInvitation(user, token, req.get('origin'));
+
+    return res.status(201).send({ status: true, message: Auth.INFO.REGISTRATION_SUCCESSFUL });
+  } catch (error) {
+    switch (error.message) {
+      case Auth.ERROR.SIGN_UP_ERROR:
+        return res.status(400).json({ status: false, message: Auth.INFO.REGISTRATION_FAILED });
+      default:
+        return res.status(500).send(Errors.INTERNAL_ERROR);
+    }
+  }
+};
+
 export const signIn = async (req: Request, res: Response)
 : Promise<Response<any, Record<string, any>>> => {
   try {

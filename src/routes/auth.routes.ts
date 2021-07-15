@@ -6,6 +6,7 @@ import { authorize } from '../middlewares/authorize';
 const router = Router();
 
 router.post('/sign-up', authCtlr.signUp);
+router.post('/sign-up-invitation', authCtlr.signUpWithInvitation);
 router.post('/verify-email', authCtlr.verifyEmail);
 router.post('/sign-in', authCtlr.signIn);
 router.post('/forgot-password', authCtlr.forgotPassword);

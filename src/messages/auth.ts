@@ -9,6 +9,7 @@ export default {
     SIGN_IN_ERROR: 'SIGN_IN_ERROR',
     SIGN_UP_ERROR: 'SIGN_UP_ERROR',
     VALIDATE_RESET_TOKEN_ERROR: 'VALIDATE_RESET_TOKEN_ERROR',
+    PROCESSING_INVITATION_ERROR: 'PROCESSING_INVITATION_ERROR',
   },
   INFO: {
     CHECK_EMAIL: 'Please check your email for password reset instructions',

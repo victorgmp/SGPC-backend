@@ -1,7 +1,7 @@
 enum InvitationStatus {
   SENT = 'Sent',
   FORWARDED = 'Forwarded',
-  ACEPTED = 'Acepted',
+  ACCEPTED = 'Accepted',
 }
 
 export default InvitationStatus;
